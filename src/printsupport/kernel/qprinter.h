@@ -285,6 +285,9 @@ public:
         DuplexShortSide
     };
 
+    void beginSectionOutline(const QString &text, const QString &anchor);
+    void endSectionOutline();
+    
     void setOutputFormat(OutputFormat format);
     OutputFormat outputFormat() const;
 
