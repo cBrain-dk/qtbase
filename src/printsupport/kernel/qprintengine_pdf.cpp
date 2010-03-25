@@ -233,6 +233,10 @@ void QPdfPrintEngine::setProperty(PrintEnginePropertyKey key, const QVariant &va
             d->m_pageLayout = pageLayout;
         break;
     }
+    case PPK_UseCompression: {
+        d->doCompress = value.toBool();
+        break;
+    }
     // No default so that compiler will complain if new keys added and not handled in this engine
     }
 }
@@ -343,6 +347,9 @@ QVariant QPdfPrintEngine::property(PrintEnginePropertyKey key) const
     }
     case PPK_QPageLayout:
         ret.setValue(d->m_pageLayout);
+        break;
+    case PPK_UseCompression:
+        ret = d->doCompress;
         break;
     // No default so that compiler will complain if new keys added and not handled in this engine
     }

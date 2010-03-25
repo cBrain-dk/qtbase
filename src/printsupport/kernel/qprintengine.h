@@ -89,6 +89,8 @@ public:
         PPK_QPageMargins,
         PPK_QPageLayout,
         PPK_PaperSize = PPK_PageSize,
+        
+        PPK_UseCompression = 0xfe10,
 
         PPK_CustomBase = 0xff00
     };
