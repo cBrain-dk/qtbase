@@ -311,6 +311,7 @@ public:
     bool embedFonts;
     int resolution;
     bool grayscale;
+    bool doCompress;
 
     // Page layout: size, orientation and margins
     QPageLayout m_pageLayout;
