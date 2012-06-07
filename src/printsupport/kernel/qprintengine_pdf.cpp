@@ -237,6 +237,14 @@ void QPdfPrintEngine::setProperty(PrintEnginePropertyKey key, const QVariant &va
         d->doCompress = value.toBool();
         break;
     }
+    case PPK_ImageQuality: {
+        d->imageQuality = value.toInt();
+        break;
+    }
+    case PPK_ImageDPI: {
+        d->imageDPI = value.toInt();
+        break;
+    }
     // No default so that compiler will complain if new keys added and not handled in this engine
     }
 }
@@ -350,6 +358,12 @@ QVariant QPdfPrintEngine::property(PrintEnginePropertyKey key) const
         break;
     case PPK_UseCompression:
         ret = d->doCompress;
+        break;
+    case PPK_ImageQuality:
+        ret = d->imageQuality;
+        break;
+    case PPK_ImageDPI:
+        ret = d->imageDPI;
         break;
     // No default so that compiler will complain if new keys added and not handled in this engine
     }

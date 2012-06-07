@@ -189,7 +189,11 @@ public:
 
     void drawTextItem(const QPointF &p, const QTextItem &textItem) Q_DECL_OVERRIDE;
 
-    void drawPixmap (const QRectF & rectangle, const QPixmap & pixmap, const QRectF & sr) Q_DECL_OVERRIDE;
+    void drawPixmap(const QRectF &r, const QPixmap &pm, const QRectF &sr, const QByteArray * data=0) Q_DECL_OVERRIDE;
+    void drawPixmap(const QRectF & rectangle, const QPixmap & pixmap, const QRectF & sr) {
+        drawPixmap(rectangle, pixmap, sr, 0);
+    }
+    
     void drawImage(const QRectF &r, const QImage &pm, const QRectF &sr,
                    Qt::ImageConversionFlags flags = Qt::AutoColor) Q_DECL_OVERRIDE;
     void drawTiledPixmap (const QRectF & rectangle, const QPixmap & pixmap, const QPointF & point) Q_DECL_OVERRIDE;
@@ -272,7 +276,9 @@ public:
     void writeHeader();
     void writeTail();
 
-    int addImage(const QImage &image, bool *bitmap, qint64 serial_no);
+    void convertImage(const QImage & image, QByteArray & imageData);
+
+    int addImage(const QImage &image, bool *bitmap, qint64 serial_no, const QImage * noneScaled=0, const QByteArray * data=0, bool * useScaled=0);
     int addConstantAlphaObject(int brushAlpha, int penAlpha = 255);
     int addBrushPattern(const QTransform &matrix, bool *specifyColor, int *gStateObject);
 
@@ -313,7 +319,10 @@ public:
     bool embedFonts;
     int resolution;
     bool grayscale;
+    
     bool doCompress;
+    int imageDPI;
+    int imageQuality;
 
     // Page layout: size, orientation and margins
     QPageLayout m_pageLayout;
