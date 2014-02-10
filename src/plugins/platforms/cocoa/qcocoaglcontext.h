@@ -35,6 +35,7 @@
 #define QCOCOAGLCONTEXT_H
 
 #include <QtCore/QPointer>
+#ifndef QT_NO_OPENGL
 #include <qpa/qplatformopenglcontext.h>
 #include <QtGui/QOpenGLContext>
 #include <QtGui/QWindow>
@@ -82,5 +83,7 @@ private:
 };
 
 QT_END_NAMESPACE
+
+#endif // QT_NO_OPENGL
 
 #endif // QCOCOAGLCONTEXT_H
