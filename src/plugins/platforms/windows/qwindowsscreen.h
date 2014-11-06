@@ -90,7 +90,7 @@ public:
     QImage::Format format() const Q_DECL_OVERRIDE { return m_data.format; }
     QSizeF physicalSize() const Q_DECL_OVERRIDE { return m_data.physicalSizeMM; }
     QDpi logicalDpi() const Q_DECL_OVERRIDE
-        { return QDpi(m_data.dpi.first / QWindowsScaling::factor(), m_data.dpi.second / QWindowsScaling::factor()); }
+        { return QDpi(72 / QWindowsScaling::factor(), 72 / QWindowsScaling::factor()); } /* PHANTOMJS enforces 72 DPI to be platform independent */
     qreal devicePixelRatio() const Q_DECL_OVERRIDE { return QWindowsScaling::factor(); }
     qreal refreshRate() const Q_DECL_OVERRIDE { return m_data.refreshRateHz; }
     QString name() const Q_DECL_OVERRIDE { return m_data.name; }
