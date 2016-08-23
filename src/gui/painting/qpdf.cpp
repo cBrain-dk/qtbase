@@ -2876,10 +2876,10 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             Bytef* dest = new Bytef[destLen];
             if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
                 (uLongf)destLen < target) {
-                imageData=convertedImageData;
-                target=destLen;
-                dct=false;
-                useNonScaled=true;
+                imageData = convertedImageData;
+                target = destLen;
+                dct = false;
+                useNonScaled = true;
             }
             delete[] dest;
         }
@@ -2892,31 +2892,32 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             Bytef* dest = new Bytef[destLen];
             if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
                 (uLongf)destLen < target) {
-                imageData=convertedImageData;
-                target=destLen;
-                dct=false;
-                useNonScaled=false;
+                imageData = convertedImageData;
+                target = destLen;
+                dct = false;
+                useNonScaled = false;
             }
             delete[] dest;
         }
 
 
         if (!grayscale && noneScaled != 0 && orgData != 0) {
-          jpg_header_reader header;
-          if (header.read(orgData)) {
-            d = header.components == 3?32:8;
-            imageData = *orgData;
-            target=orgData->size();
-            dct=true;
-            useNonScaled=true;
-          }
+            jpg_header_reader header;
+            if (header.read(orgData)) {
+                d = header.components == 3?32:8;
+                imageData = *orgData;
+                target = orgData->size();
+                dct=true;
+                useNonScaled=true;
+            }
         }
 
         if (useNonScaled) {
             w = noneScaled->width();
             h = noneScaled->height();
         }
-        if (useScaled) *useScaled = (useNonScaled?false:true);
+        if (useScaled)
+            *useScaled = !useNonScaled;
         QByteArray softMaskData;
         bool hasAlpha = false;
         bool hasMask = false;
