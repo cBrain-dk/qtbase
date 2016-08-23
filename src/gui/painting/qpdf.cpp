@@ -2900,6 +2900,8 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                         useNonScaled = false;
                     }
                 }
+            } else {
+                imageData = convertedImageData;
             }
         }
 
