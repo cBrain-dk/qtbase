@@ -2211,7 +2211,7 @@ int QPdfEnginePrivate::writeCompressed(const char *src, int len)
 }
 
 int QPdfEnginePrivate::writeImage(const QByteArray &data, int width, int height, int depth,
-                                  int maskObject, int softMaskObject, bool dct)
+                                  int maskObject, int softMaskObject, bool dct, bool isDeflated)
 {
     int image = addXrefEntry(-1);
     xprintf("<<\n"
@@ -2243,11 +2243,16 @@ int QPdfEnginePrivate::writeImage(const QByteArray &data, int width, int height,
         write(data);
         len = data.length();
     } else {
-        if (doCompress)
+        if (doCompress || isDeflated)
             xprintf("/Filter /FlateDecode\n>>\nstream\n");
         else
             xprintf(">>\nstream\n");
-        len = writeCompressed(data);
+        if (isDeflated) {
+            stream->writeRawData(data.constData(), data.length());
+            len = data.length();
+        } else {
+            len = writeCompressed(data);
+        }
     }
     xprintf("endstream\n"
             "endobj\n");
@@ -2848,6 +2853,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
         QByteArray imageData;
         bool useNonScaled=false;
         bool dct = false;
+        bool deflated = false;
 
         d = grayscale ? 8 : 32;
 
@@ -2862,14 +2868,16 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             convertImage(image, convertedImageData);
             if (doCompress) {
                 uLongf len = convertedImageData.size();
-                uLongf destLen = len + len / 100 + 13; // zlib requirement
-                Bytef* dest = new Bytef[destLen];
-                if (Z_OK == ::compress(dest, &destLen, (const Bytef*)convertedImageData.data(), (uLongf)len)) {
+                uLongf compressedLen  = len + len / 100 + 13; // zlib requirement
+                QByteArray compressedImageData;
+                compressedImageData.reserve(compressedLen);
+                if (Z_OK == ::compress((Bytef*)compressedImageData.data(), &compressedLen, (const Bytef*)convertedImageData.data(), (uLongf)len)) {
+                    compressedImageData.resize(compressedLen);
                     imageData = convertedImageData;
                     dct = false;
                     useNonScaled = false;
+                    deflated = true;
                 }
-                delete[] dest;
             }
         }
 
@@ -2920,7 +2928,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             maskObject = writeImage(mask, w, h, 1, 0, 0);
         }
         object = writeImage(imageData, w, h, d,
-                            maskObject, softMaskObject, dct);
+                            maskObject, softMaskObject, dct, deflated);
     }
     imageCache.insert(serial_no, object);
     return object;
