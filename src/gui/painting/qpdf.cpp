@@ -2860,15 +2860,17 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
         } else {
             QByteArray convertedImageData;
             convertImage(image, convertedImageData);
-            uLongf len = convertedImageData.size();
-            uLongf destLen = len + len/100 + 13; // zlib requirement
-            Bytef* dest = new Bytef[destLen];
-            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len)) {
-                imageData = convertedImageData;
-                dct = false;
-                useNonScaled = false;
+            if (doCompress) {
+                uLongf len = convertedImageData.size();
+                uLongf destLen = len + len / 100 + 13; // zlib requirement
+                Bytef* dest = new Bytef[destLen];
+                if (Z_OK == ::compress(dest, &destLen, (const Bytef*)convertedImageData.data(), (uLongf)len)) {
+                    imageData = convertedImageData;
+                    dct = false;
+                    useNonScaled = false;
+                }
+                delete[] dest;
             }
-            delete[] dest;
         }
 
         if (useNonScaled) {
