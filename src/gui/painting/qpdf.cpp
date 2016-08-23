@@ -2851,24 +2851,34 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
         object = writeImage(data, w, h, d, 0, 0);
     } else {
         QByteArray imageData;
-        bool useNonScaled=false;
+        bool orgDct = false;
+        int orgDctDepth;
+        bool useNonScaled = false;
         bool dct = false;
         bool deflated = false;
 
         d = grayscale ? 8 : 32;
 
-        jpg_header_reader header;
-        if (!grayscale && noneScaled != 0 && orgData != 0 && header.read(orgData)) {
-            d = header.components == 3?32:8;
+        bool mustScaleImage = noneScaled && noneScaled->rect() != image.rect();
+
+        if (orgData) {
+            jpg_header_reader header;
+            if (header.read(orgData)) {
+                orgDct = true;
+                orgDctDepth = header.components == 3 ? 32 : 8;
+            }
+        }
+        if (orgDct && !grayscale && !mustScaleImage) {
+            d = orgDctDepth;
             imageData = *orgData;
-            dct=true;
-            useNonScaled=true;
+            dct = true;
+            useNonScaled = true;
         } else {
             QByteArray convertedImageData;
             convertImage(image, convertedImageData);
             if (doCompress) {
                 uLongf len = convertedImageData.size();
-                uLongf compressedLen  = len + len / 100 + 13; // zlib requirement
+                uLongf compressedLen = len + len / 100 + 13; // zlib requirement
                 QByteArray compressedImageData;
                 compressedImageData.reserve(compressedLen);
                 if (Z_OK == ::compress((Bytef*)compressedImageData.data(), &compressedLen, (const Bytef*)convertedImageData.data(), (uLongf)len)) {
@@ -2877,6 +2887,24 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                     dct = false;
                     useNonScaled = false;
                     deflated = true;
+                }
+
+                if (orgDct &&
+                    QImageWriter::supportedImageFormats().contains("jpeg") &&
+                    !grayscale) {
+                    QByteArray imageData2;
+  
+                    QBuffer buffer(&imageData2);
+                    QImageWriter writer(&buffer, "jpeg");
+                    writer.setQuality(imageQuality);
+                    writer.write(image);
+  
+                    if ((uLongf)imageData2.size() < compressedLen) {
+                        imageData = imageData2;
+                        dct = true;
+                        deflated = false;
+                        useNonScaled = false;
+                    }
                 }
             }
         }
