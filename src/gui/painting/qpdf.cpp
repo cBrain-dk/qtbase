@@ -2805,7 +2805,7 @@ static inline bool is_monochrome(const QVector<QRgb> &colorTable)
 /*!
  * Adds an image to the pdf and return the pdf-object id. Returns -1 if adding the image failed.
  */
-int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_no, const QImage * noneScaled, const QByteArray * data, bool * useScaled)
+int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_no, const QImage * noneScaled, const QByteArray * orgData, bool * useScaled)
 {
     if (img.isNull())
         return -1;
@@ -2847,7 +2847,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
     } else {
         QByteArray imageData;
         uLongf target=1024*1024*1024;
-        bool uns=false;
+        bool useNonScaled=false;
         bool dct = false;
 
         d = grayscale ? 8 : 32;
@@ -2864,59 +2864,59 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                 imageData=imageData2;
                 target = imageData2.size();
                 dct = true;
-                uns=false;
+                useNonScaled=false;
             }
         }
 
         if (noneScaled && noneScaled->rect() != image.rect()) {
-            QByteArray imageData2;
-            convertImage(*noneScaled, imageData2);
-            uLongf len = imageData2.size();
+            QByteArray convertedImageData;
+            convertImage(*noneScaled, convertedImageData);
+            uLongf len = convertedImageData.size();
             uLongf destLen = len + len/100 + 13; // zlib requirement
             Bytef* dest = new Bytef[destLen];
-            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) imageData2.data(), (uLongf)len) &&
+            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
                 (uLongf)destLen < target) {
-                imageData=imageData2;
+                imageData=convertedImageData;
                 target=destLen;
                 dct=false;
-                uns=true;
+                useNonScaled=true;
             }
             delete[] dest;
         }
 
         {
-            QByteArray imageData2;
-            convertImage(image, imageData2);
-            uLongf len = imageData2.size();
+            QByteArray convertedImageData;
+            convertImage(image, convertedImageData);
+            uLongf len = convertedImageData.size();
             uLongf destLen = len + len/100 + 13; // zlib requirement
             Bytef* dest = new Bytef[destLen];
-            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) imageData2.data(), (uLongf)len) &&
+            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
                 (uLongf)destLen < target) {
-                imageData=imageData2;
+                imageData=convertedImageData;
                 target=destLen;
                 dct=false;
-                uns=false;
+                useNonScaled=false;
             }
             delete[] dest;
         }
 
 
-        if (!grayscale && noneScaled != 0 && data != 0) {
+        if (!grayscale && noneScaled != 0 && orgData != 0) {
           jpg_header_reader header;
-          if (header.read(data)) {
+          if (header.read(orgData)) {
             d = header.components == 3?32:8;
-            imageData = *data;
-            target=data->size();
+            imageData = *orgData;
+            target=orgData->size();
             dct=true;
-            uns=true;
+            useNonScaled=true;
           }
         }
 
-        if (uns) {
+        if (useNonScaled) {
             w = noneScaled->width();
             h = noneScaled->height();
         }
-        if (useScaled) *useScaled = (uns?false:true);
+        if (useScaled) *useScaled = (useNonScaled?false:true);
         QByteArray softMaskData;
         bool hasAlpha = false;
         bool hasMask = false;
@@ -2925,7 +2925,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             softMaskData.resize(w * h);
             uchar *sdata = (uchar *)softMaskData.data();
             for (int y = 0; y < h; ++y) {
-                const QRgb *rgb = (const QRgb *)(uns?noneScaled->constScanLine(y):image.constScanLine(y));
+                const QRgb *rgb = (const QRgb *)(useNonScaled?noneScaled->constScanLine(y):image.constScanLine(y));
                 for (int x = 0; x < w; ++x) {
                     uchar alpha = qAlpha(*rgb);
                     *sdata++ = alpha;
