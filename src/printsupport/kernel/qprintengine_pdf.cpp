@@ -245,6 +245,10 @@ void QPdfPrintEngine::setProperty(PrintEnginePropertyKey key, const QVariant &va
         d->imageDPI = value.toInt();
         break;
     }
+    case PPK_ForceJPEG: {
+        d->forceJpeg = value.toBool();
+        break;
+    }
     // No default so that compiler will complain if new keys added and not handled in this engine
     }
 }
@@ -364,6 +368,9 @@ QVariant QPdfPrintEngine::property(PrintEnginePropertyKey key) const
         break;
     case PPK_ImageDPI:
         ret = d->imageDPI;
+        break;
+    case PPK_ForceJPEG:
+        ret = d->forceJpeg;
         break;
     // No default so that compiler will complain if new keys added and not handled in this engine
     }

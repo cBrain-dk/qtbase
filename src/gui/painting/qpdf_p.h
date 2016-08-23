@@ -323,6 +323,7 @@ public:
     bool doCompress;
     int imageDPI;
     int imageQuality;
+    bool forceJpeg;
 
     // Page layout: size, orientation and margins
     QPageLayout m_pageLayout;

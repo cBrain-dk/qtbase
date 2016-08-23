@@ -1393,6 +1393,7 @@ QPdfEnginePrivate::QPdfEnginePrivate()
     stream = new QDataStream;
     outlineRoot = NULL;
     outlineCurrent = NULL;
+    forceJpeg = false;
 }
 
 bool QPdfEngine::begin(QPaintDevice *pdev)
@@ -2885,7 +2886,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                 imageData = convertedImageData;
                 deflated = true;
 
-                if (orgDct &&
+                if ((orgDct || forceJpeg) &&
                     QImageWriter::supportedImageFormats().contains("jpeg") &&
                     !grayscale) {
                     QByteArray imageData2;
