@@ -2914,15 +2914,25 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
         }
         if (useScaled)
             *useScaled = !useNonScaled;
+
         QByteArray softMaskData;
         bool hasAlpha = false;
         bool hasMask = false;
-
-        if (format != QImage::Format_RGB32) {
+ 
+        if ((!useNonScaled && format == QImage::Format_ARGB32) || (useNonScaled && noneScaled->hasAlphaChannel())) {
             softMaskData.resize(w * h);
             uchar *sdata = (uchar *)softMaskData.data();
+            const QImage* imgPtr;
+            QImage argb32NoneScaled;
+            if (useNonScaled && noneScaled->format() != QImage::Format_ARGB32) {
+              argb32NoneScaled = noneScaled->convertToFormat(QImage::Format_ARGB32);
+              imgPtr = &argb32NoneScaled;
+            } else {
+              imgPtr = useNonScaled ? noneScaled : &image;
+            }
+  
             for (int y = 0; y < h; ++y) {
-                const QRgb *rgb = (const QRgb *)(useNonScaled?noneScaled->constScanLine(y):image.constScanLine(y));
+                const QRgb *rgb = (const QRgb *)(imgPtr->scanLine(y));
                 for (int x = 0; x < w; ++x) {
                     uchar alpha = qAlpha(*rgb);
                     *sdata++ = alpha;
