@@ -2881,13 +2881,12 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                 uLongf compressedLen = len + len / 100 + 13; // zlib requirement
                 QByteArray compressedImageData;
                 compressedImageData.reserve(compressedLen);
-                if (Z_OK == ::compress((Bytef*)compressedImageData.data(), &compressedLen, (const Bytef*)convertedImageData.data(), (uLongf)len)) {
-                    compressedImageData.resize(compressedLen);
-                    imageData = convertedImageData;
-                    dct = false;
-                    useNonScaled = false;
-                    deflated = true;
-                }
+                if (Z_OK != ::compress((Bytef*)compressedImageData.data(), &compressedLen, (const Bytef*)convertedImageData.data(), (uLongf)len))
+                    return -1;
+                compressedImageData.resize(compressedLen);
+                
+                imageData = convertedImageData;
+                deflated = true;
 
                 if (orgDct &&
                     QImageWriter::supportedImageFormats().contains("jpeg") &&
