@@ -2868,22 +2868,6 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             }
         }
 
-        if (noneScaled && noneScaled->rect() != image.rect()) {
-            QByteArray convertedImageData;
-            convertImage(*noneScaled, convertedImageData);
-            uLongf len = convertedImageData.size();
-            uLongf destLen = len + len/100 + 13; // zlib requirement
-            Bytef* dest = new Bytef[destLen];
-            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
-                (uLongf)destLen < target) {
-                imageData = convertedImageData;
-                target = destLen;
-                dct = false;
-                useNonScaled = true;
-            }
-            delete[] dest;
-        }
-
         {
             QByteArray convertedImageData;
             convertImage(image, convertedImageData);
