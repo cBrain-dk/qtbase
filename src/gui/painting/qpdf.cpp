@@ -899,10 +899,12 @@ void QPdfEngine::drawPixmap (const QRectF &rectangle, const QPixmap &pixmap, con
     QRectF a = d->stroker.matrix.mapRect(rectangle);
     QRectF c = d->m_pageLayout.paintRectPixels(d->resolution);
     QSize pageSize = d->m_pageLayout.fullRectPoints().size();
-    int maxWidth = int(a.width() / c.width() * pageSize.width() / 72.0 * d->imageDPI);
-    int maxHeight = int(a.height() / c.height() * pageSize.height() / 72.0 * d->imageDPI);
-    if (image.width() > maxWidth || image.height() > maxHeight)
-        image = unscaled.scaled( image.size().boundedTo( QSize(maxWidth, maxHeight) ), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    if (d->imageDPI > 0) {
+        int maxWidth = int(a.width() / c.width() * pageSize.width() / 72.0 * d->imageDPI);
+        int maxHeight = int(a.height() / c.height() * pageSize.height() / 72.0 * d->imageDPI);
+        if (image.width() > maxWidth || image.height() > maxHeight)
+            image = unscaled.scaled(image.size().boundedTo(QSize(maxWidth, maxHeight)), Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+    }
 
     bool useScaled=true;
     bool bitmap = true;
