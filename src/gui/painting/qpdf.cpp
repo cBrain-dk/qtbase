@@ -2846,27 +2846,10 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
         object = writeImage(data, w, h, d, 0, 0);
     } else {
         QByteArray imageData;
-        uLongf target=1024*1024*1024;
         bool useNonScaled=false;
         bool dct = false;
 
         d = grayscale ? 8 : 32;
-
-        if (QImageWriter::supportedImageFormats().contains("jpeg") && !grayscale) {
-            QByteArray imageData2;
-
-            QBuffer buffer(&imageData2);
-            QImageWriter writer(&buffer, "jpeg");
-            writer.setQuality(imageQuality);
-            writer.write(image);
-
-            if ((uLongf)imageData2.size() < target) {
-                imageData=imageData2;
-                target = imageData2.size();
-                dct = true;
-                useNonScaled=false;
-            }
-        }
 
         {
             QByteArray convertedImageData;
@@ -2874,10 +2857,8 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             uLongf len = convertedImageData.size();
             uLongf destLen = len + len/100 + 13; // zlib requirement
             Bytef* dest = new Bytef[destLen];
-            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len) &&
-                (uLongf)destLen < target) {
+            if (Z_OK == ::compress(dest, &destLen, (const Bytef*) convertedImageData.data(), (uLongf)len)) {
                 imageData = convertedImageData;
-                target = destLen;
                 dct = false;
                 useNonScaled = false;
             }
@@ -2890,7 +2871,6 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             if (header.read(orgData)) {
                 d = header.components == 3?32:8;
                 imageData = *orgData;
-                target = orgData->size();
                 dct=true;
                 useNonScaled=true;
             }
