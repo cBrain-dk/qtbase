@@ -2851,7 +2851,13 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
 
         d = grayscale ? 8 : 32;
 
-        {
+        jpg_header_reader header;
+        if (!grayscale && noneScaled != 0 && orgData != 0 && header.read(orgData)) {
+            d = header.components == 3?32:8;
+            imageData = *orgData;
+            dct=true;
+            useNonScaled=true;
+        } else {
             QByteArray convertedImageData;
             convertImage(image, convertedImageData);
             uLongf len = convertedImageData.size();
@@ -2863,17 +2869,6 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                 useNonScaled = false;
             }
             delete[] dest;
-        }
-
-
-        if (!grayscale && noneScaled != 0 && orgData != 0) {
-            jpg_header_reader header;
-            if (header.read(orgData)) {
-                d = header.components == 3?32:8;
-                imageData = *orgData;
-                dct=true;
-                useNonScaled=true;
-            }
         }
 
         if (useNonScaled) {
