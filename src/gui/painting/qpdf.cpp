@@ -2829,11 +2829,6 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
             image = image.convertToFormat(QImage::Format_ARGB32);
     }
     QImage::Format format = image.format();
-    QImage nonScaledImage;
-    if (noneScaled && noneScaled->format() != format) {
-        nonScaledImage = noneScaled->convertToFormat(format);
-        noneScaled = &nonScaledImage;
-    }
 
     int w = image.width();
     int h = image.height();
