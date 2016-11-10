@@ -2883,7 +2883,7 @@ int QPdfEnginePrivate::addImage(const QImage &img, bool *bitmap, qint64 serial_n
                     return -1;
                 compressedImageData.resize(compressedLen);
                 
-                imageData = convertedImageData;
+                imageData = compressedImageData;
                 deflated = true;
 
                 if ((orgDct || forceJpeg) &&
