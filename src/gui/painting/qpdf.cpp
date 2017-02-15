@@ -2735,24 +2735,32 @@ private:
   class jpeg_exception {};
 
   unsigned char next() {
-    if (index == data->size()) throw jpeg_exception();
+    if (index == data->size())
+      throw jpeg_exception();
     return data->data()[index++];
   }
 
+  unsigned short next_short() {
+    unsigned char vu = next();
+    unsigned char vl = next();
+    return (vu << 8) | vl;
+  }
+
   void skip() {
-    int l = (next() << 8) + next();
-    if (l < 2) throw jpeg_exception();
-    for (int i=2; i < l; ++i) next();
+    int l = next_short();
+    if (l < 2 || index + l - 2 > data->size())
+      throw jpeg_exception();
+    index += l - 2;
   }
 
   void read_header() {
-    int l = (next() << 8) + next();
-    if (l < 2) throw jpeg_exception();
+    int l = next_short();
+    if (l < 8)
+      throw jpeg_exception();
     precision = next();
-    height = (next() << 8) + next();
-    width = (next() << 8) + next();
+    height = next_short();
+    width = next_short();
     components = next();
-    if (l != 8 + components*3) throw jpeg_exception();
   }
 
 public:
@@ -2760,9 +2768,11 @@ public:
     index=0;
     data=d;
     try {
-      if (next() != 0xFF) throw jpeg_exception();
+      if (next() != 0xFF)
+        return false;
       unsigned char marker = next();
-      if (marker != 0xD8) throw jpeg_exception();
+      if (marker != 0xD8)
+        return false;
       while (true) {
         marker = next();
         while (marker != 0xFF) marker=next();
@@ -2771,6 +2781,8 @@ public:
           case 0xC0:   // SOF0 Start Of Frame N - BaseLine
           case 0xC1:   // SOF1 N indicates which compression process - Extended Sequential
           case 0xC2:   // SOF2 Only SOF0-SOF2 are now in common use - Progressive
+            read_header();
+            return true;
           case 0xC3:   // SOF3 Lossless
           case 0xC5:   // SOF5 Differential sequential
           case 0xC6:   // SOF6 Differential progressive
@@ -2781,9 +2793,6 @@ public:
           case 0xCD:   // SOF13 Differential sequential, arithmetic coding
           case 0xCE:   // SOF14 Differential progressive, arithmetic coding
           case 0xCF:   // SOF15 Differential lossless, arithmetic coding
-          case 0xE1:   // EXIF/XMP Exif marker.  Also used for XMP data!
-            read_header();
-            return true;
           case 0xDA:    // SOS Start Of Scan (begins compressed data)
           case 0xD9:    // EOI End Of Image (end of datastream)
             return false;
